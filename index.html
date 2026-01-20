@@ -3,28 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>スキャンテスト</title>
+    <title>オフライン・スキャンテスト</title>
     <script src="./html5-qrcode.min.js"></script>
 </head>
-<body style="font-family: sans-serif; text-align: center;">
-    <h2>QR/バーコードスキャンテスト</h2>
-    <div id="reader" style="width: 100%; max-width: 400px; margin: auto;"></div>
-    <div style="margin-top: 20px; padding: 10px; background: #eee;">
-        結果: <span id="res" style="font-weight: bold; color: red;">---</span>
+<body style="font-family: sans-serif; text-align: center; background-color: #f4f4f4; margin: 0; padding: 20px;">
+
+    <h2>スキャナー（画像保存なし）</h2>
+    
+    <div id="reader" style="width: 100%; max-width: 500px; margin: auto; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"></div>
+    
+    <div style="margin-top: 20px; padding: 15px; background: #fff; border-radius: 8px; display: inline-block; min-width: 300px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+        <span style="color: #666;">読み取り結果:</span>< br>
+        <span id="res" style="font-weight: bold; color: #d9534f; font-size: 1.2em;">---</span>
     </div>
 
     <script>
+        // スキャナーの初期化
         const html5QrCode = new Html5Qrcode("reader");
-        const config = { fps: 10, qrbox: { width: 250, height: 150 } };
-
-        const onScanSuccess = (decodedText) => {
-            document.getElementById("res").innerText = decodedText;
-            // 連続で読み取らないよう停止（テスト時はコメントアウトしてもOK）
-            html5QrCode.stop();
+        
+        const config = { 
+            fps: 10,        // 1秒間に10回解析
+            qrbox: { width: 280, height: 180 } // スキャン枠（バーコード対応のため横長）
         };
 
-        html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess)
-            .catch(err => alert("カメラ起動エラー: " + err));
+        // スキャン成功時の処理
+        const onScanSuccess = (decodedText) => {
+            document.getElementById("res").innerText = decodedText;
+            
+            // 連続スキャンを防ぐために一度停止（必要に応じてコメントアウト）
+            html5QrCode.stop().then(() => {
+                console.log("スキャン停止");
+            });
+        };
+
+        // カメラの起動（背面カメラ優先）
+        html5QrCode.start(
+            { facingMode: "environment" }, 
+            config, 
+            onScanSuccess
+        ).catch(err => {
+            document.getElementById("res").innerText = "エラー: " + err;
+        });
     </script>
 </body>
 </html>
