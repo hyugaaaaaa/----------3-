@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>スキャンテスト</title>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+</head>
+<body style="font-family: sans-serif; text-align: center;">
+    <h2>QR/バーコードスキャンテスト</h2>
+    <div id="reader" style="width: 100%; max-width: 400px; margin: auto;"></div>
+    <div style="margin-top: 20px; padding: 10px; background: #eee;">
+        結果: <span id="res" style="font-weight: bold; color: red;">---</span>
+    </div>
+
+    <script>
+        const html5QrCode = new Html5Qrcode("reader");
+        const config = { fps: 10, qrbox: { width: 250, height: 150 } };
+
+        const onScanSuccess = (decodedText) => {
+            document.getElementById("res").innerText = decodedText;
+            // 連続で読み取らないよう停止（テスト時はコメントアウトしてもOK）
+            html5QrCode.stop();
+        };
+
+        html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess)
+            .catch(err => alert("カメラ起動エラー: " + err));
+    </script>
+</body>
+</html>
