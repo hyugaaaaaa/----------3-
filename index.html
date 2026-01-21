@@ -18,34 +18,38 @@
     </div>
 
 <script>
-    // スキャナーの初期化
+    // 1. スキャナーの初期化
     const html5QrCode = new Html5Qrcode("reader");
     
-    // 変数宣言は1回だけにする
+    // 2. 設定（config）の宣言。※ここが2回あるとエラーになります
     const config = { 
         fps: 20,                          // 解析回数を増やして精度向上
         qrbox: { width: 300, height: 150 }, // バーコードに最適な横長サイズ
-        aspectRatio: 1.777778,             // 16:9比率
+        aspectRatio: 1.777778,             // スマホカメラに多い16:9比率
         experimentalFeatures: {
-            useBarCodeDetectorIfSupported: true // ブラウザの高速エンジンを使用
+            useBarCodeDetectorIfSupported: true // ブラウザ標準の高速エンジンを使用
         }
     };
 
+    // 3. スキャン成功時の処理
     const onScanSuccess = (decodedText) => {
         document.getElementById("res").innerText = decodedText;
-        // 読み取り後に停止
+        
+        // 読み取り後にカメラを停止
         html5QrCode.stop().then(() => {
             console.log("スキャン停止");
+        }).catch(err => {
+            console.warn("停止エラー:", err);
         });
     };
 
-    // カメラの起動
+    // 4. カメラの起動実行
     html5QrCode.start(
         { facingMode: "environment" }, 
         config, 
         onScanSuccess
     ).catch(err => {
-        document.getElementById("res").innerText = "カメラ起動エラー: " + err;
+        document.getElementById("res").innerText = "起動エラー: " + err;
     });
 </script>
 </body>
