@@ -3,54 +3,83 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>オフライン・スキャンテスト</title>
+    <title>高精度スキャンテスト</title>
     <script src="./html5-qrcode.min.js"></script>
 </head>
 <body style="font-family: sans-serif; text-align: center; background-color: #f4f4f4; margin: 0; padding: 20px;">
 
-    <h2>スキャナー（画像保存なし）</h2>
+    <h2>スキャナー（ズーム＆再試行付）</h2>
     
     <div id="reader" style="width: 100%; max-width: 500px; margin: auto; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"></div>
     
-    <div style="margin-top: 20px; padding: 15px; background: #fff; border-radius: 8px; display: inline-block; min-width: 300px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-        <span style="color: #666;">読み取り結果:</span><br>
-        <span id="res" style="font-weight: bold; color: #d9534f; font-size: 1.2em;">---</span>
+    <div id="zoom-container" style="margin-top: 15px; display: none;">
+        <label>ズーム: </label>
+        <input type="range" id="zoom-range" min="1" max="5" step="0.1" value="1" style="width: 200px;">
+        <span id="zoom-value">1.0</span>x
     </div>
 
-<script>
-    // 1. スキャナーの初期化
-    const html5QrCode = new Html5Qrcode("reader");
-    
-    // 2. 設定（config）の宣言。※ここが2回あるとエラーになります
-    const config = { 
-        fps: 20,                          // 解析回数を増やして精度向上
-        qrbox: { width: 300, height: 150 }, // バーコードに最適な横長サイズ
-        aspectRatio: 1.777778,             // スマホカメラに多い16:9比率
-        experimentalFeatures: {
-            useBarCodeDetectorIfSupported: true // ブラウザ標準の高速エンジンを使用
-        }
-    };
+    <div style="margin-top: 20px; padding: 15px; background: #fff; border-radius: 8px; display: inline-block; min-width: 300px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+        読み取り結果: <span id="res" style="font-weight: bold; color: #d9534f;">---</span><br><br>
+        <button id="restart-btn" style="display: none; padding: 10px 20px; font-size: 16px; cursor: pointer; background: #5cb85c; color: white; border: none; border-radius: 5px;">
+            次のスキャンを開始
+        </button>
+    </div>
 
-    // 3. スキャン成功時の処理
-    const onScanSuccess = (decodedText) => {
-        document.getElementById("res").innerText = decodedText;
-        
-        // 読み取り後にカメラを停止
-        html5QrCode.stop().then(() => {
-            console.log("スキャン停止");
-        }).catch(err => {
-            console.warn("停止エラー:", err);
-        });
-    };
+    <script>
+        const html5QrCode = new Html5Qrcode("reader");
+        const resDisp = document.getElementById("res");
+        const restartBtn = document.getElementById("restart-btn");
+        const zoomContainer = document.getElementById("zoom-container");
+        const zoomRange = document.getElementById("zoom-range");
+        const zoomValue = document.getElementById("zoom-value");
 
-    // 4. カメラの起動実行
-    html5QrCode.start(
-        { facingMode: "environment" }, 
-        config, 
-        onScanSuccess
-    ).catch(err => {
-        document.getElementById("res").innerText = "起動エラー: " + err;
-    });
-</script>
+        const config = { 
+            fps: 20, 
+            qrbox: { width: 300, height: 150 },
+            aspectRatio: 1.777778
+        };
+
+        const onScanSuccess = (decodedText) => {
+            resDisp.innerText = decodedText;
+            restartBtn.style.display = "inline-block"; // ボタンを表示
+            
+            html5QrCode.stop().then(() => {
+                zoomContainer.style.display = "none"; // 停止中はズームを隠す
+            });
+        };
+
+        // スキャンを開始する関数
+        const startScanner = () => {
+            resDisp.innerText = "---";
+            restartBtn.style.display = "none";
+            
+            html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess)
+                .then(() => {
+                    // カメラ起動後にズーム機能をチェック
+                    const capabilities = html5QrCode.getRunningTrackCameraCapabilities();
+                    if (capabilities.zoomFeature().isSupported()) {
+                        const zoom = capabilities.zoomFeature();
+                        zoomContainer.style.display = "block";
+                        zoomRange.min = zoom.min();
+                        zoomRange.max = zoom.max();
+                        zoomRange.step = zoom.step();
+                        zoomRange.value = zoom.value();
+                        zoomValue.innerText = zoom.value().toFixed(1);
+
+                        zoomRange.oninput = () => {
+                            zoom.apply(zoomRange.value);
+                            zoomValue.innerText = parseFloat(zoomRange.value).toFixed(1);
+                        };
+                    }
+                })
+                .catch(err => alert("起動エラー: " + err));
+        };
+
+        // 初回起動
+        startScanner();
+
+        // 再読み取りボタンのクリックイベント
+        restartBtn.onclick = startScanner;
+    </script>
 </body>
 </html>
