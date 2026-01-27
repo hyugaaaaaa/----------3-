@@ -40,11 +40,43 @@
         };
 
         const onScanSuccess = (decodedText) => {
-            resDisp.innerText = decodedText;
-            restartBtn.style.display = "inline-block"; // ボタンを表示
-            
+            // スキャン停止
             html5QrCode.stop().then(() => {
                 zoomContainer.style.display = "none"; // 停止中はズームを隠す
+                
+                // 読み取り中の表示
+                resDisp.innerHTML = `コード: ${decodedText}<br>照合中...`;
+
+                // バックエンドAPIへ問い合わせ
+                fetch(`./api/scan.php?code=${encodeURIComponent(decodedText)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // 商品が見つかった場合
+                            resDisp.innerHTML = `
+                                <div style="color: #333; font-size: 1.2em;">${data.data.name}</div>
+                                <div style="color: #e91e63; font-weight: bold; font-size: 1.5em;">¥${data.data.price}</div>
+                                <div style="color: #666; font-size: 0.9em;">コード: ${data.data.code}</div>
+                            `;
+                            // 成功音を鳴らすなどの処理もここで可能
+                        } else {
+                            // 商品が見つからなかった場合
+                            resDisp.innerHTML = `
+                                <div style="color: #d9534f; font-weight: bold;">未登録の商品です</div>
+                                <div style="color: #666; font-size: 0.9em;">コード: ${decodedText}</div>
+                            `;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        resDisp.innerHTML = `
+                            <div style="color: red;">通信エラーが発生しました</div>
+                            <div style="color: #666; font-size: 0.9em;">${error.message}</div>
+                        `;
+                    })
+                    .finally(() => {
+                        restartBtn.style.display = "inline-block"; // ボタンを表示
+                    });
             });
         };
 
