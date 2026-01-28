@@ -1,24 +1,25 @@
 <?php
-// データベース接続設定
-$host = 'localhost';
-$dbname = 'stock_management';
-$username = 'root';
-$password = '';
+// db_config.php
 
-try {
-    $dsn = "mysql:host=$host;dbname=$dbname;charset=utf8mb4";
-    $pdo = new PDO($dsn, $username, $password, [
-        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-        PDO::ATTR_EMULATE_PREPARES => false,
-    ]);
-} catch (PDOException $e) {
-    // 本番環境ではエラー詳細を表示しないように注意
-    header('Content-Type: application/json; charset=utf-8');
-    http_response_code(500);
-    echo json_encode([
-        'success' => false,
-        'message' => 'Database Connection Error: ' . $e->getMessage()
-    ]);
-    exit;
+// データベース設定
+define('DB_HOST', 'localhost');
+define('DB_NAME', 'stock_management');
+define('DB_USER', 'root');
+define('DB_PASS', '');
+
+function getPDO() {
+    try {
+        $dsn = "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=utf8mb4";
+        $options = [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+            PDO::ATTR_EMULATE_PREPARES => false,
+        ];
+        return new PDO($dsn, DB_USER, DB_PASS, $options);
+    } catch (PDOException $e) {
+        // 本番環境では詳細なエラーを表示しない方が良いが、開発中は表示する
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode(['success' => false, 'message' => 'Database Connection Error: ' . $e->getMessage()]);
+        exit;
+    }
 }
