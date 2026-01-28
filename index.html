@@ -1,28 +1,54 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>高精度スキャンテスト</title>
     <script src="./html5-qrcode.min.js"></script>
 </head>
+
 <body style="font-family: sans-serif; text-align: center; background-color: #f4f4f4; margin: 0; padding: 20px;">
 
     <h2>スキャナー（ズーム＆再試行付）</h2>
-    
-    <div id="reader" style="width: 100%; max-width: 500px; margin: auto; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"></div>
-    
+
+    <div id="reader"
+        style="width: 100%; max-width: 500px; margin: auto; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+    </div>
+
     <div id="zoom-container" style="margin-top: 15px; display: none;">
         <label>ズーム: </label>
         <input type="range" id="zoom-range" min="1" max="5" step="0.1" value="1" style="width: 200px;">
         <span id="zoom-value">1.0</span>x
     </div>
 
-    <div style="margin-top: 20px; padding: 15px; background: #fff; border-radius: 8px; display: inline-block; min-width: 300px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-        読み取り結果: <span id="res" style="font-weight: bold; color: #d9534f;">---</span><br><br>
-        <button id="restart-btn" style="display: none; padding: 10px 20px; font-size: 16px; cursor: pointer; background: #5cb85c; color: white; border: none; border-radius: 5px;">
+    <div
+        style="margin-top: 20px; padding: 15px; background: #fff; border-radius: 8px; display: inline-block; min-width: 300px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+        <h3>最新のスキャン結果</h3>
+        <div id="res" style="font-weight: bold; min-height: 60px;">---</div>
+        <br>
+        <button id="restart-btn"
+            style="display: none; padding: 10px 20px; font-size: 16px; cursor: pointer; background: #5cb85c; color: white; border: none; border-radius: 5px;">
             次のスキャンを開始
         </button>
+    </div>
+
+    <!-- スキャン履歴テーブル -->
+    <div style="margin-top: 30px; width: 100%; max-width: 600px; margin-left: auto; margin-right: auto;">
+        <h3>スキャン履歴</h3>
+        <table
+            style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+            <thead>
+                <tr style="background: #eee; text-align: left;">
+                    <th style="padding: 10px; border-bottom: 1px solid #ddd;">時間</th>
+                    <th style="padding: 10px; border-bottom: 1px solid #ddd;">商品名/結果</th>
+                    <th style="padding: 10px; border-bottom: 1px solid #ddd;">価格</th>
+                </tr>
+            </thead>
+            <tbody id="history-body">
+                <!-- ここに行が追加されます -->
+            </tbody>
+        </table>
     </div>
 
     <script>
@@ -32,9 +58,10 @@
         const zoomContainer = document.getElementById("zoom-container");
         const zoomRange = document.getElementById("zoom-range");
         const zoomValue = document.getElementById("zoom-value");
+        const historyBody = document.getElementById("history-body");
 
-        const config = { 
-            fps: 20, 
+        const config = {
+            fps: 20,
             qrbox: { width: 300, height: 150 },
             aspectRatio: 1.777778
         };
@@ -43,7 +70,7 @@
             // スキャン停止
             html5QrCode.stop().then(() => {
                 zoomContainer.style.display = "none"; // 停止中はズームを隠す
-                
+
                 // 読み取り中の表示
                 resDisp.innerHTML = `コード: ${decodedText}<br>照合中...`;
 
@@ -51,21 +78,48 @@
                 fetch(`./api/scan.php?code=${encodeURIComponent(decodedText)}`)
                     .then(response => response.json())
                     .then(data => {
+                        const now = new Date();
+                        const timeStr = now.getHours().toString().padStart(2, '0') + ':' +
+                            now.getMinutes().toString().padStart(2, '0') + ':' +
+                            now.getSeconds().toString().padStart(2, '0');
+
+                        let resultHtml = '';
+                        let historyRowHtml = '';
+
                         if (data.success) {
                             // 商品が見つかった場合
-                            resDisp.innerHTML = `
+                            resultHtml = `
                                 <div style="color: #333; font-size: 1.2em;">${data.data.name}</div>
                                 <div style="color: #e91e63; font-weight: bold; font-size: 1.5em;">¥${data.data.price}</div>
                                 <div style="color: #666; font-size: 0.9em;">コード: ${data.data.code}</div>
                             `;
-                            // 成功音を鳴らすなどの処理もここで可能
+
+                            historyRowHtml = `
+                                <td style="padding: 10px; border-bottom: 1px solid #eee;">${timeStr}</td>
+                                <td style="padding: 10px; border-bottom: 1px solid #eee; color: #333;">${data.data.name}</td>
+                                <td style="padding: 10px; border-bottom: 1px solid #eee; font-weight: bold;">¥${data.data.price}</td>
+                            `;
                         } else {
                             // 商品が見つからなかった場合
-                            resDisp.innerHTML = `
+                            resultHtml = `
                                 <div style="color: #d9534f; font-weight: bold;">未登録の商品です</div>
                                 <div style="color: #666; font-size: 0.9em;">コード: ${decodedText}</div>
                             `;
+
+                            historyRowHtml = `
+                                <td style="padding: 10px; border-bottom: 1px solid #eee;">${timeStr}</td>
+                                <td style="padding: 10px; border-bottom: 1px solid #eee; color: #d9534f;">未登録 (${decodedText})</td>
+                                <td style="padding: 10px; border-bottom: 1px solid #eee;">-</td>
+                            `;
                         }
+
+                        // 最新結果の表示
+                        resDisp.innerHTML = resultHtml;
+
+                        // 履歴への追加 (先頭に追加)
+                        const newRow = document.createElement('tr');
+                        newRow.innerHTML = historyRowHtml;
+                        historyBody.insertBefore(newRow, historyBody.firstChild);
                     })
                     .catch(error => {
                         console.error('Error:', error);
@@ -84,7 +138,7 @@
         const startScanner = () => {
             resDisp.innerText = "---";
             restartBtn.style.display = "none";
-            
+
             html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess)
                 .then(() => {
                     // カメラ起動後にズーム機能をチェック
@@ -114,5 +168,6 @@
         restartBtn.onclick = startScanner;
     </script>
 </body>
+
 </html>
 <!-- 修正版 -->
