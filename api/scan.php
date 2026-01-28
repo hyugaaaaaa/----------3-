@@ -1,8 +1,10 @@
 <?php
 header('Content-Type: application/json; charset=utf-8');
 
-// クラスの読み込み (簡易的なオートロードの代わり)
+// DB接続設定とクラス定義の読み込み
+require_once __DIR__ . '/../db_config.php';
 require_once __DIR__ . '/../classes/Product.php';
+require_once __DIR__ . '/../classes/Inventory.php';
 require_once __DIR__ . '/../classes/ScanLogger.php';
 
 // メイン処理の実行
@@ -14,15 +16,19 @@ try {
 
     $code = htmlspecialchars($_GET['code']);
 
-    // インスタンス化
-    $productModel = new Product();
+    // インスタンス化 (db_config.phpで生成された $pdo を使用)
+    $productModel = new Product($pdo);
+    $inventoryModel = new Inventory($pdo);
     $logger = new ScanLogger();
 
     // 商品検索
     $product = $productModel->getByCode($code);
 
     if ($product) {
-        // 商品が見つかった場合
+        // 商品が見つかった場合、現在庫（理論在庫）を取得
+        $currentStock = $inventoryModel->getTheoreticalStock($product['id']);
+
+        // ログ出力
         $resultMessage = 'Match: ' . $product['name'];
         $logger->log($code, $resultMessage);
 
@@ -30,9 +36,11 @@ try {
             'success' => true,
             'message' => '商品が見つかりました',
             'data' => [
-                'code' => $code,
+                'id' => $product['id'],
+                'code' => $product['code'],
                 'name' => $product['name'],
-                'price' => $product['price']
+                'price' => $product['price'],
+                'current_stock' => $currentStock
             ]
         ], JSON_UNESCAPED_UNICODE);
 

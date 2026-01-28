@@ -1,21 +1,11 @@
 <?php
 
 class Product {
-    // データベース接続のかわりにダミーデータを使用
-    private $dummyData = [
-        '4901330574369' => [
-            'name' => 'ポテトチップス うすしお味',
-            'price' => 150
-        ],
-        '4549131970258' => [
-            'name' => 'ダイソー USBケーブル',
-            'price' => 110
-        ],
-        'TEST12345' => [
-            'name' => 'テスト商品A',
-            'price' => 500
-        ]
-    ];
+    private $pdo;
+
+    public function __construct($pdo) {
+        $this->pdo = $pdo;
+    }
 
     /**
      * 商品コードから商品情報を取得する
@@ -24,9 +14,20 @@ class Product {
      * @return array|null 商品情報配列、または見つからない場合はnull
      */
     public function getByCode($code) {
-        if (isset($this->dummyData[$code])) {
-            return $this->dummyData[$code];
+        $stmt = $this->pdo->prepare("SELECT * FROM M_商品マスタ WHERE 商品コード = :code");
+        $stmt->execute([':code' => $code]);
+        $result = $stmt->fetch();
+
+        if ($result) {
+            return [
+                'id' => $result['商品ID'],
+                'code' => $result['商品コード'],
+                'name' => $result['商品名'],
+                'price' => 0, // マスタに価格がないため0とする
+                'category_id' => $result['カテゴリ']
+            ];
         }
+
         return null;
     }
 }
