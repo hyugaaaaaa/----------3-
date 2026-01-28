@@ -14,7 +14,7 @@ CREATE TABLE `M_汎用コードマスタ` (
 -- 2. 倉庫マスタ
 CREATE TABLE `M_倉庫マスタ` (
     `倉庫ID` INT NOT NULL,
-    `倉庫コード` VARCHAR(10) NOT NULL,
+    `倉庫コード` VARCHAR(20) NOT NULL,
     `倉庫名` VARCHAR(10),
     `有効フラグ` TINYINT(1),
     `登録者` INT NOT NULL,
@@ -28,7 +28,7 @@ CREATE TABLE `M_倉庫マスタ` (
 CREATE TABLE `M_棚マスタ` (
     `棚ID` INT NOT NULL,
     `倉庫ID` INT NOT NULL,
-    `棚コード` VARCHAR(10) NOT NULL,
+    `棚コード` VARCHAR(20) NOT NULL,
     `棚名称` VARCHAR(10),
     `有効フラグ` TINYINT(1),
     `登録者` INT NOT NULL,
@@ -41,7 +41,7 @@ CREATE TABLE `M_棚マスタ` (
 -- 4. 商品マスタ
 CREATE TABLE `M_商品マスタ` (
     `商品ID` INT NOT NULL,
-    `商品コード` VARCHAR(10) NOT NULL,
+    `商品コード` VARCHAR(20) NOT NULL,
     `商品名` VARCHAR(256) NOT NULL,
     `カテゴリ` INT NOT NULL,
     `登録者` INT NOT NULL,

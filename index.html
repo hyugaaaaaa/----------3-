@@ -219,7 +219,11 @@
         const config = {
             fps: 20,
             qrbox: { width: 300, height: 150 },
-            aspectRatio: 1.777778
+            aspectRatio: 1.777778,
+            // バーコード読み取り精度の向上 (Chrome Androidなど)
+            experimentalFeatures: {
+                useBarCodeDetectorIfSupported: true
+            }
         };
 
         const onScanSuccess = (decodedText) => {
