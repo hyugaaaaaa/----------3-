@@ -56,7 +56,7 @@ class Inventory {
                 ) VALUES (
                     :ym, :date, :warehouse_id, :shelf_id, :product_id,
                     :theoretical, :actual, :diff, 1, NOW(),
-                    :user_id, NOW(), :user_id, NOW()
+                    :reg_user_id, NOW(), :upd_user_id, NOW()
                 )";
         
         $ym = (int)date('Ym');
@@ -71,7 +71,8 @@ class Inventory {
         $stmt->bindValue(':theoretical', $theoreticalStock, PDO::PARAM_INT);
         $stmt->bindValue(':actual', $actualStock, PDO::PARAM_INT);
         $stmt->bindValue(':diff', $diff, PDO::PARAM_INT);
-        $stmt->bindValue(':user_id', $userId, PDO::PARAM_INT);
+        $stmt->bindValue(':reg_user_id', $userId, PDO::PARAM_INT);
+        $stmt->bindValue(':upd_user_id', $userId, PDO::PARAM_INT);
         
         $stmt->execute();
         
